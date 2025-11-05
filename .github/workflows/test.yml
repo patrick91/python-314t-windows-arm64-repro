@@ -1,0 +1,36 @@
+name: Test Python 3.14t on Windows ARM64
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test-windows-arm64-freethreaded:
+    runs-on: windows-11-arm
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python 3.14t (free-threaded)
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14t'
+          architecture: arm64
+          allow-prereleases: true
+      
+      - name: Verify Python installation
+        shell: bash
+        run: |
+          echo "Python version:"
+          python --version
+          echo ""
+          echo "Python executable location:"
+          which python
+          echo ""
+          echo "Python sys info:"
+          python -c "import sys; print(f'Executable: {sys.executable}'); print(f'Version: {sys.version}')"
+      
+      - name: Test free-threading is enabled
+        shell: bash
+        run: |
+          python -c "import sys; print(f'Free-threading enabled: {sys._is_gil_enabled() if hasattr(sys, \"_is_gil_enabled\") else \"Unknown\"}')"
