@@ -108,3 +108,94 @@ jobs:
             echo "Free-threading status:"
             python -c "import sys; print(f'Free-threading enabled: {sys._is_gil_enabled() if hasattr(sys, \"_is_gil_enabled\") else \"N/A\"}')"
           fi
+
+  test-x64-314-and-314t-together:
+    name: Test 3.14 and 3.14t together on Windows x64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python 3.14 and 3.14t
+        uses: actions/setup-python@v6
+        with:
+          python-version: |
+            3.14
+            3.14t
+          architecture: x64
+          allow-prereleases: true
+      
+      - name: Verify Python installation
+        shell: bash
+        run: |
+          echo "Default Python version:"
+          python --version
+          echo ""
+          echo "Python executable location:"
+          which python
+          echo ""
+          echo "Python sys info:"
+          python -c "import sys; print(f'Executable: {sys.executable}'); print(f'Version: {sys.version}')"
+          echo ""
+          echo "=== Checking all installed Python versions ==="
+          for py in python3.14 python3.14t; do
+            echo ""
+            echo "Testing $py:"
+            if command -v $py &> /dev/null; then
+              $py --version
+              $py -c "import sys; print(f'  Executable: {sys.executable}')"
+              $py -c "import sys; print(f'  Free-threading: {sys._is_gil_enabled() if hasattr(sys, \"_is_gil_enabled\") else \"N/A\"}')"
+            else
+              echo "  $py not found!"
+            fi
+          done
+      
+      - name: Check what maturin can find
+        shell: bash
+        run: |
+          echo "=== Installing maturin ==="
+          pip install maturin
+          echo ""
+          echo "=== Maturin list-python output ==="
+          maturin list-python || echo "maturin list-python failed"
+
+  test-x64-separated-jobs:
+    name: Test 3.14 and 3.14t in separate jobs on Windows x64
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ['3.14', '3.14t']
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+          allow-prereleases: true
+      
+      - name: Verify Python installation
+        shell: bash
+        run: |
+          echo "Python version:"
+          python --version
+          echo ""
+          echo "Python executable location:"
+          which python
+          echo ""
+          echo "Python sys info:"
+          python -c "import sys; print(f'Executable: {sys.executable}'); print(f'Version: {sys.version}')"
+          echo ""
+          if [ "${{ matrix.python-version }}" == "3.14t" ]; then
+            echo "Free-threading status:"
+            python -c "import sys; print(f'Free-threading enabled: {sys._is_gil_enabled() if hasattr(sys, \"_is_gil_enabled\") else \"N/A\"}')"
+          fi
+      
+      - name: Check what maturin can find
+        shell: bash
+        run: |
+          echo "=== Installing maturin ==="
+          pip install maturin
+          echo ""
+          echo "=== Maturin list-python output ==="
+          maturin list-python || echo "maturin list-python failed"
