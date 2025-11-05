@@ -37,7 +37,7 @@ jobs:
           python -c "import sys; print(f'Free-threading enabled: {sys._is_gil_enabled() if hasattr(sys, \"_is_gil_enabled\") else \"Unknown\"}')"
 
   test-multiple-versions:
-    name: Test 3.14 and 3.14t together
+    name: Test 3.14 and 3.14t together (one step)
     runs-on: windows-11-arm
     steps:
       - uses: actions/checkout@v4
@@ -51,6 +51,55 @@ jobs:
             3.13
             3.14
             3.14t
+          architecture: arm64
+          allow-prereleases: true
+      
+      - name: Verify Python installation
+        shell: bash
+        run: |
+          echo "Default Python version:"
+          python --version
+          echo ""
+          echo "Python executable location:"
+          which python
+          echo ""
+          echo "Python sys info:"
+          python -c "import sys; print(f'Executable: {sys.executable}'); print(f'Version: {sys.version}')"
+          echo ""
+          echo "=== Checking all installed Python versions ==="
+          for py in python3.11 python3.12 python3.13 python3.14 python3.14t; do
+            echo ""
+            echo "Testing $py:"
+            if command -v $py &> /dev/null; then
+              $py --version
+              $py -c "import sys; print(f'  Executable: {sys.executable}')"
+              $py -c "import sys; print(f'  Free-threading: {sys._is_gil_enabled() if hasattr(sys, \"_is_gil_enabled\") else \"N/A\"}')"
+            else
+              echo "  $py not found!"
+            fi
+          done
+
+  test-separated-steps:
+    name: Test 3.14 and 3.14t in separate steps
+    runs-on: windows-11-arm
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python (regular builds)
+        uses: actions/setup-python@v6
+        with:
+          python-version: |
+            3.11
+            3.12
+            3.13
+            3.14
+          architecture: arm64
+          allow-prereleases: true
+      
+      - name: Setup Python 3.14t (free-threaded)
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14t'
           architecture: arm64
           allow-prereleases: true
       
